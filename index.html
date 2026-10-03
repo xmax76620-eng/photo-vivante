@@ -429,11 +429,13 @@ return found;
 function buildPrompt(){
 var style=state.selectedStyle?findStyle(state.selectedStyle):null;
 var parts=[];
-parts.push('Animate this exact photo of a person as the starting frame. The person must remain IDENTICAL to the input image: same face, same expression base, same clothing, same identity. This is a CONTINUATION of the source photo, bringing it gently to life. Preserve the exact composition and framing.');
-if(style)parts.push(style.prompt);
-if(state.mainPrompt&&state.mainPrompt.trim())parts.push('Additional direction: '+state.mainPrompt.trim());
-parts.push('Subtle, respectful, natural movement. No exaggerated changes. Portrait orientation 9:16 vertical, 24fps, no text, no watermarks.');
-return parts.join('. ');
+parts.push('CRITICAL INSTRUCTION: Animate this exact photo without changing the person identity. The face, facial features, eyes, nose, mouth, skin tone, hair, and clothing must remain 100% IDENTICAL to the source image. This is NOT a re-imagination, NOT a stylization, NOT a new generation. This is the SAME photo gently brought to life with subtle motion only.');
+parts.push('DO NOT alter the facial structure. DO NOT change the person age. DO NOT modify the expression beyond subtle natural movement. DO NOT add or remove any object. DO NOT change the background composition.');
+if(style)parts.push('Motion style: '+style.prompt);
+if(state.mainPrompt&&state.mainPrompt.trim())parts.push('Additional direction (must not override the identity preservation rule): '+state.mainPrompt.trim());
+parts.push('Only the following subtle movements are allowed: slow natural breathing, gentle eye blinking, soft micro-expressions, slight hair movement if applicable, very subtle light shifts. The camera must remain static.');
+parts.push('Preserve the exact original framing, composition, and aspect ratio. Portrait orientation 9:16 vertical, 24fps, no text, no watermarks, no subtitles, no added effects.');
+return parts.join(' ');
 }
   
 function apiFetch(url,options){
