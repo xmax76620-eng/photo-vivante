@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Photo Vivante</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0d0d0f;--panel:#16161a;--panel-2:#1e1e24;--border:#2a2a32;--ink:#f0f0f5;--ink-dim:#9a9aa8;--ink-faint:#5a5a68;--accent:#d97757;--accent-2:#8b6f47;--success:#2d8a4e;--error:#c0392b;--warn:#d4a017;--radius:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:1.5rem 1rem 6rem;font-size:15px;line-height:1.5;max-width:900px;margin:0 auto}
+header{margin-bottom:1.5rem;text-align:center}
+h1{font-size:1.6rem;font-weight:800;margin-bottom:.3rem;background:linear-gradient(135deg,#d97757,#f4a261,#8b6f47);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{font-size:.8rem;color:var(--ink-dim);font-style:italic}
+.toast{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--panel);color:#fff;padding:.85rem 1.4rem;border-radius:10px;font-size:.85rem;z-index:1000;opacity:0;transition:all .35s;max-width:90vw;text-align:center;display:flex;align-items:center;gap:.5rem;border:1px solid var(--border)}
+.toast.visible{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--error)}
+.toast.warn{background:var(--warn)}
+.info-banner{background:linear-gradient(135deg,rgba(217,119,87,.15),rgba(139,111,71,.15));border-left:3px solid var(--accent);padding:.85rem 1rem;border-radius:8px;font-size:.78rem;margin-bottom:1rem;line-height:1.5}
+.api-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:1rem}
+.api-panel.ok{border-color:var(--success)}
+.api-key-input{width:100%;padding:.85rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--ink);font-family:monospace;font-size:.85rem;margin-bottom:.6rem}
+.api-save-btn{width:100%;padding:.8rem;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;margin-bottom:.6rem}
+.api-status-line{font-size:.75rem;padding:.55rem .85rem;border-radius:6px;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;background:var(--panel-2);color:var(--ink-dim)}
+.api-status-line.ok{background:rgba(45,138,78,.2);color:var(--success);font-weight:600}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint)}
+.api-status-line.ok .status-dot{background:var(--success)}
+.api-hint{font-size:.72rem;color:var(--ink-dim);margin-top:.4rem}
+.api-hint a{color:var(--accent)}
+.stat-line{font-size:.72rem;color:var(--ink-dim);margin-top:.5rem;padding:.4rem .6rem;background:var(--panel-2);border-radius:6px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem}
+.wake-status{font-size:.72rem;padding:.5rem .7rem;border-radius:6px;margin-top:.4rem;display:flex;justify-content:space-between;align-items:center;background:rgba(217,119,87,.15);color:var(--accent);flex-wrap:wrap;gap:.4rem}
+.wake-status.active{background:rgba(45,138,78,.2);color:var(--success)}
+.wake-status button{background:transparent;border:1px solid currentColor;color:inherit;padding:.25rem .6rem;border-radius:6px;font-size:.68rem;cursor:pointer}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:2rem 1rem;text-align:center;cursor:pointer;margin-bottom:1rem;background:var(--panel)}
+.upload-zone input[type=file]{display:none}
+.upload-icon{font-size:2.4rem;margin-bottom:.6rem}
+.upload-text{font-size:1rem;margin-bottom:.2rem;font-weight:600}
+.upload-hint{font-size:.75rem;color:var(--ink-dim)}
+.images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;margin-bottom:1rem}
+.image-card{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#000;aspect-ratio:9/16}
+.image-card img{width:100%;height:100%;object-fit:cover}
+.remove-btn{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.75);color:#fff;border:none;width:22px;height:22px;border-radius:50%;font-size:11px;cursor:pointer}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
+.section-header{padding:.9rem 1.1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim);font-weight:700}
+.section-header .chevron{font-size:.7rem;color:var(--ink-faint);transition:transform .2s}
+.section.open .section-header .chevron{transform:rotate(180deg)}
+.section-body{max-height:0;overflow:hidden;transition:max-height .3s}
+.section.open .section-body{max-height:8000px}
+.section-content{padding:0 1.1rem 1.1rem}
+.styles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem}
+.style-card{padding:.85rem;border-radius:10px;border:2px solid var(--border);background:var(--panel-2);cursor:pointer;display:flex;align-items:center;gap:.6rem}
+.style-card.selected{border-color:var(--accent);background:linear-gradient(135deg,rgba(217,119,87,.25),rgba(139,111,71,.15))}
+.style-emoji{font-size:1.6rem}
+.style-name{font-size:.82rem;font-weight:700;line-height:1.2}
+.style-desc{font-size:.65rem;opacity:.7;margin-top:.15rem;line-height:1.25}
+.style-category-header{grid-column:1/-1;font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;padding:.6rem 0 .3rem;border-bottom:1px solid var(--border);margin-bottom:.3rem}
+.style-category-header:first-child{padding-top:0;border-bottom:none}
+.style-category-desc{grid-column:1/-1;font-size:.68rem;color:var(--ink-dim);font-style:italic;margin-bottom:.4rem;line-height:1.35}
+.prompt-main{width:100%;padding:.85rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--ink);font-family:inherit;font-size:.9rem;min-height:100px;resize:vertical;line-height:1.5}
+.prompt-hint{font-size:.72rem;color:var(--ink-dim);margin-top:.5rem;line-height:1.4}
+.control-row{margin-bottom:.9rem}
+.control-label{display:block;font-size:.72rem;color:var(--ink-dim);margin-bottom:.4rem;text-transform:uppercase;font-weight:700}
+select{width:100%;padding:.7rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--ink);font-family:inherit;font-size:.88rem;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%239a9aa8' d='M0 0l5 6 5-6z'/></svg>");background-repeat:no-repeat;background-position:right .9rem center;background-size:10px}
+.btn-primary{width:100%;padding:1.2rem;border-radius:var(--radius);border:none;background:linear-gradient(135deg,#d97757,#f4a261);color:#fff;font-size:1.05rem;font-weight:800;cursor:pointer;margin-bottom:1rem;box-shadow:0 4px 24px rgba(217,119,87,.35)}
+.btn-primary:disabled{opacity:.3;cursor:not-allowed;box-shadow:none}
+.btn-stop{width:100%;padding:.8rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel);color:var(--error);font-size:.85rem;font-weight:700;cursor:pointer;margin-bottom:1rem;display:none}
+.btn-stop.visible{display:block}
+.queue{margin-top:1rem}
+.queue-summary{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem;margin-bottom:.6rem;font-size:.78rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
+.queue-item{display:flex;align-items:center;gap:.8rem;padding:.7rem .8rem;border-radius:8px;border:1px solid var(--border);margin-bottom:.4rem;background:var(--panel);font-size:.82rem}
+.queue-item.pending{opacity:.5}
+.queue-item.creating{border-color:var(--warn)}
+.queue-item.processing{border-color:var(--accent)}
+.queue-item.done{border-color:var(--success)}
+.queue-item.failed{border-color:var(--error)}
+.q-icon{font-size:1rem;width:1.5rem;text-align:center}
+.q-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q-status{font-size:.72rem;color:var(--ink-dim)}
+.gallery{margin-top:1.5rem}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.8rem}
+.gallery-item{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:#000}
+.gallery-item video{width:100%;display:block;aspect-ratio:9/16;object-fit:cover}
+.g-caption{padding:.4rem .6rem;background:var(--panel);font-size:.7rem;color:var(--ink-dim);text-align:center}
+.g-download{display:block;width:100%;padding:.6rem;background:var(--accent);color:#fff;text-align:center;text-decoration:none;font-size:.78rem;font-weight:700;cursor:pointer}
+.status-bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border);color:var(--ink);padding:.7rem 1rem;font-size:.78rem;display:flex;align-items:center;gap:.6rem;transform:translateY(100%);transition:transform .3s;z-index:100}
+.status-bar.visible{transform:translateY(0)}
+.spinner{width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#noSleepCanvas,#noSleepVideo{position:fixed;top:0;left:0;width:1px;height:1px;opacity:.01;pointer-events:none;z-index:-1}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Photo Vivante</h1>
+<p class="subtitle">Donne vie à tes souvenirs</p>
+</header>
+
+<div class="info-banner">
+<strong>Comment ça marche :</strong> Ajoute une ou plusieurs photos de personnes, choisis un style ou décris ta vision, et lance. Chaque photo devient une <strong>vidéo 9:16</strong> où la personne prend vie : respiration, regard, sourire, mouvement doux.
+</div>
+
+<div class="api-panel" id="api-panel">
+<input type="text" class="api-key-input" id="api-key-input" placeholder="Collez votre clé API ici (sk-...)" autocomplete="off" spellcheck="false">
+<button type="button" class="api-save-btn" id="api-save-btn">Enregistrer la clé</button>
+<div class="api-status-line" id="api-status-line">
+<span class="status-dot"></span>
+<span id="api-status-text">Aucune clé API enregistrée</span>
+</div>
+<div class="api-hint">Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank">platform.agnes-ai.com</a></div>
+<div class="stat-line">
+<span>📊 Vitesse : <span id="stat-speed">en attente</span></span>
+<span id="stat-samples">0 génération</span>
+</div>
+<div class="wake-status" id="wake-status">
+<span id="wake-status-text">💤 Veille automatique</span>
+<button type="button" id="wake-toggle-btn">Garder l'écran allumé</button>
+</div>
+</div>
+
+<div class="upload-zone" id="upload-zone">
+<input type="file" id="file-input" accept="image/*" multiple>
+<div class="upload-icon">📸</div>
+<div class="upload-text">Ajoute tes photos</div>
+<div class="upload-hint">Photos de personnes — portrait de préférence</div>
+</div>
+
+<div class="images-grid" id="images-grid"></div>
+
+<div class="section open" id="section-style">
+<div class="section-header" data-toggle="section-style">
+<span class="section-title">🎨 Choisis un style</span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div class="styles-grid" id="styles-grid"></div>
+</div>
+</div>
+</div>
+
+<div class="section open" id="section-prompt">
+<div class="section-header" data-toggle="section-prompt">
+<span class="section-title">✍️ Ta vision (optionnel)</span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<textarea class="prompt-main" id="main-prompt" placeholder="Décris comment tu veux que la personne prenne vie. Exemple : Un sourire doux apparaît, les yeux brillent, la lumière est chaude et dorée."></textarea>
+<div class="prompt-hint">💡 Si vide, le style sélectionné gère le prompt.</div>
+</div>
+</div>
+</div>
+
+<div class="section" id="section-tech">
+<div class="section-header" data-toggle="section-tech">
+<span class="section-title">📷 Réglages techniques</span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div class="control-row">
+<label class="control-label">Durée</label>
+<select id="duration-select">
+<option value="121">5 secondes</option>
+<option value="153" selected>6,4 secondes</option>
+<option value="241">10 secondes</option>
+</select>
+</div>
+<div class="control-row">
+<label class="control-label">Cadrage</label>
+<select id="framing-select">
+<option value="random">Aléatoire</option>
+<option value="close">Gros plan</option>
+<option value="medium" selected>Moyen</option>
+<option value="wide">Large</option>
+</select>
+</div>
+<div class="control-row">
+<label class="control-label">Intensité du mouvement</label>
+<select id="intensity-select">
+<option value="random">Aléatoire</option>
+<option value="subtle" selected>Subtile</option>
+<option value="moderate">Modérée</option>
+<option value="strong">Forte</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+
+<button type="button" class="btn-primary" id="generate-btn" disabled>Créer les vidéos</button>
+<button type="button" class="btn-stop" id="stop-btn">⏹ Arrêter</button>
+
+<div class="queue" id="queue" style="display:none;"></div>
+
+<div class="gallery" id="gallery" style="display:none;">
+<div class="section-title" style="margin-bottom:.8rem;">🎬 Tes vidéos</div>
+<div class="gallery-grid" id="gallery-grid"></div>
+</div>
+
+<div class="status-bar" id="status-bar">
+<div class="spinner"></div>
+<span id="status-text">Préparation…</span>
+</div>
+
+<div class="toast" id="toast">
+<span class="toast-icon" id="toast-icon">✓</span>
+<span id="toast-text">Message</span>
+</div>
+
+<canvas id="noSleepCanvas" width="2" height="2"></canvas>
+<video id="noSleepVideo" playsinline muted loop></video>
+
+<script>
+var API_BASE='https://apihub.agnes-ai.com/v1';
+var POLL_BASE='https://apihub.agnes-ai.com/agnesapi';
+var MODEL_VIDEO='agnes-video-v2.0';
+var FRAME_RATE=24;
+var createIntervalMs=62000;
+var CREATE_INTERVAL_MIN=62000;
+var CREATE_INTERVAL_MAX=90000;
+var POLL_INTERVAL_SEC=8;
+var MAX_POLL_ATTEMPTS=100;
+var API_KEY_STORAGE='photovivante_api_key';
+var WAKE_LOCK_PREF='photovivante_wakelock';
+var MAX_VISIBLE_QUEUE=30;
+var MAX_IMAGE_SIZE=12582912;
+var THUMBNAIL_MAX_WIDTH=200;
+  
+var STYLES=[
+{cat:'👤 Portrait Vivant',desc:'La personne respire, regarde, sourit doucement.',items:[
+{id:'breathing',emoji:'🫁',name:'Respiration douce',desc:'La poitrine se soulève',prompt:'Animate this exact photo of a person. The person breathes gently, chest rising and falling slowly, calm and natural. Preserve the exact face, identity, clothing, and composition. Soft natural lighting.'},
+{id:'gaze',emoji:'👁️',name:'Regard intense',desc:'Les yeux s ouvrent',prompt:'Animate this exact photo. The person slowly opens their eyes and looks directly at the camera with an intense, alive gaze. Preserve the exact face, identity, clothing, and composition. Cinematic lighting.'},
+{id:'smile',emoji:'😊',name:'Sourire naissant',desc:'Un sourire apparaît',prompt:'Animate this exact photo. A gentle, warm smile slowly forms on the person face. The eyes brighten. Preserve the exact face, identity, clothing, and composition. Warm soft lighting.'},
+{id:'blink',emoji:'😉',name:'Clignement naturel',desc:'La personne cligne',prompt:'Animate this exact photo. The person blinks naturally once or twice, subtle and lifelike. Preserve the exact face, identity, clothing, and composition.'},
+{id:'headturn',emoji:'🔄',name:'Mouvement de tête',desc:'La tête tourne',prompt:'Animate this exact photo. The person turns their head slowly and slightly to the side, as if looking at something. Preserve the exact face, identity, clothing, and composition.'},
+{id:'tear',emoji:'💧',name:'Larme d émotion',desc:'Une larme coule',prompt:'Animate this exact photo. A single tear slowly rolls down the person cheek, intense emotion. Preserve the exact face, identity, clothing, and composition. Soft dramatic lighting.'}
+]},
+{cat:'🎞️ Ambiances émotionnelles',desc:'Change l atmosphère de la photo.',items:[
+{id:'nostalgic',emoji:'📷',name:'Souvenir nostalgique',desc:'Sépia doux',prompt:'Animate this exact photo with a nostalgic sepia atmosphere. Soft warm tones, gentle grain, memories coming alive. Preserve the exact face, identity, and composition. Slow dreamy movement.'},
+{id:'goldenhour',emoji:'🌅',name:'Golden hour',desc:'Lumière dorée',prompt:'Animate this exact photo with warm golden hour sunlight. Soft amber glow, luminous atmosphere, long shadows. Preserve the exact face, identity, and composition.'},
+{id:'cinematic',emoji:'🎬',name:'Cinématique',desc:'Éclairage de film',prompt:'Animate this exact photo with cinematic film lighting. Dramatic but tasteful, shallow depth of field, subtle film grain. Preserve the exact face, identity, and composition.'},
+{id:'bw',emoji:'⚫',name:'Noir & blanc élégant',desc:'Élégance monochrome',prompt:'Animate this exact photo in elegant black and white. Deep blacks, luminous whites, timeless beauty. Preserve the exact face, identity, and composition.'},
+{id:'dreamy',emoji:'✨',name:'Rêve éveillé',desc:'Flou onirique',prompt:'Animate this exact photo with a dreamy soft-focus aesthetic. Gentle diffused light, ethereal atmosphere, gentle movement. Preserve the exact face, identity, and composition.'},
+{id:'vintage',emoji:'📽️',name:'Vintage Super 8',desc:'Vieux film chaleureux',prompt:'Animate this exact photo with vintage Super 8 film aesthetic. Grainy texture, warm faded colors, soft focus, subtle vignette. Preserve the exact face, identity, and composition.'}
+]},
+{cat:'🕊️ Hommage',desc:'Pour honorer la mémoire d un être cher, avec respect.',items:[
+{id:'tribute',emoji:'🕯️',name:'Recueillement',desc:'Lumière douce, silence',prompt:'Animate this exact photo with deep respect and tenderness. Soft warm light, peaceful atmosphere, subtle movement. The person appears serene and dignified. Preserve the exact face, identity, and composition. No dramatic change, only gentle animation.'},
+{id:'candle',emoji:'🕯️',name:'Bougie & mémoire',desc:'Chaleur d une flamme',prompt:'Animate this exact photo with the warm glow of a candle. Golden flickering light, intimate and respectful atmosphere. Preserve the exact face, identity, and composition.'},
+{id:'sky',emoji:'☁️',name:'Ciel paisible',desc:'Nuages lents',prompt:'Animate this exact photo with a peaceful sky background, slow-moving clouds, soft natural light. Respectful and serene. Preserve the exact face, identity, and composition.'},
+{id:'wind',emoji:'🍃',name:'Souffle du vent',desc:'Vent doux',prompt:'Animate this exact photo with a gentle breeze moving the person hair softly. Peaceful and serene atmosphere. Preserve the exact face, identity, and composition.'}
+]},
+{cat:'✨ Effets spéciaux',desc:'Pour sublimer la photo.',items:[
+{id:'lightchange',emoji:'💡',name:'Lumière qui change',desc:'Variations lumineuses',prompt:'Animate this exact photo with subtle changing light, slow warm-to-cool transitions, cinematic atmosphere. Preserve the exact face, identity, and composition.'},
+{id:'particles',emoji:'✨',name:'Particules dorées',desc:'Poussière lumineuse',prompt:'Animate this exact photo with golden floating particles, subtle glowing dust in the air. Magical but tasteful. Preserve the exact face, identity, and composition.'},
+{id:'flashback',emoji:'🌫️',name:'Flashback',desc:'Fondu au blanc',prompt:'Animate this exact photo with a soft white flashback effect, dreamy memory atmosphere, gentle fade. Preserve the exact face, identity, and composition.'},
+{id:'slowzoom',emoji:'🎥',name:'Zoom lent',desc:'Zoom cinématique',prompt:'Animate this exact photo with a very slow cinematic zoom in on the person face, breathing life into the moment. Preserve the exact face, identity, and composition.'}
+]}
+];
+
+var state={images:[],isRunning:false,stopRequested:false,queue:[],completed:0,failed:0,selectedStyle:null,mainPrompt:'',framing:'medium',intensity:'subtle',durationFrames:153,isLoadingImages:false};
+
+function getApiKey(){try{return (localStorage.getItem(API_KEY_STORAGE)||'').trim()}catch(e){return ''}}
+
+function saveApiKey(){
+var input=document.getElementById('api-key-input');
+if(!input)return;
+var key=input.value.trim();
+if(!key){try{localStorage.removeItem(API_KEY_STORAGE)}catch(e){}updateApiPanel();return}
+try{localStorage.setItem(API_KEY_STORAGE,key);updateApiPanel();showToast('Clé enregistrée','success')}catch(e){showToast('Erreur','error')}
+}
+
+function updateApiPanel(){
+var panel=document.getElementById('api-panel');
+var input=document.getElementById('api-key-input');
+var statusLine=document.getElementById('api-status-line');
+var statusText=document.getElementById('api-status-text');
+var key=getApiKey();
+if(!panel)return;
+if(key){panel.classList.add('ok');statusLine.classList.add('ok');statusText.textContent='Clé active · '+key.slice(0,8)+'…'+key.slice(-4);input.value=key}
+else{panel.classList.remove('ok');statusLine.classList.remove('ok');statusText.textContent='Aucune clé API enregistrée';input.value=''}
+updateGenerateBtn();
+}
+
+function updateGenerateBtn(){
+var btn=document.getElementById('generate-btn');
+if(!btn)return;
+var hasImages=state.images.length>0;
+var hasKey=!!getApiKey();
+btn.disabled=!hasImages||!hasKey||state.isRunning||state.isLoadingImages;
+if(state.isLoadingImages)btn.textContent='Chargement…';
+else if(state.isRunning)btn.textContent='Création en cours…';
+else if(!hasKey)btn.textContent='Ajoutez votre clé API';
+else if(!hasImages)btn.textContent='Ajoutez des photos';
+else btn.textContent='Créer '+state.images.length+' vidéo'+(state.images.length>1?'s':'');
+}
+
+function showToast(message,type){
+var toast=document.getElementById('toast');
+var icon=document.getElementById('toast-icon');
+var text=document.getElementById('toast-text');
+if(!toast)return;
+toast.classList.remove('visible','success','error','warn');
+var icons={success:'✓',error:'✕',warn:'⚠'};
+icon.textContent=icons[type]||'✓';
+text.textContent=message;
+toast.classList.add(type||'success');
+setTimeout(function(){toast.classList.add('visible')},10);
+setTimeout(function(){toast.classList.remove('visible')},2500);
+}
+
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function log(msg){console.log('[PhotoVivante] '+msg)}
+function setStatus(text){
+var bar=document.getElementById('status-bar');
+var txt=document.getElementById('status-text');
+if(!bar)return;
+if(text){bar.classList.add('visible');txt.textContent=text}
+else bar.classList.remove('visible');
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+function fileToDataUri(file){
+return new Promise(function(resolve,reject){
+var reader=new FileReader();
+reader.onload=function(e){resolve(e.target.result)};
+reader.onerror=function(){reject(new Error('Erreur'))};
+reader.readAsDataURL(file);
+});
+}
+
+function generateThumbnail(dataUri){
+return new Promise(function(resolve){
+var img=new Image();
+img.onload=function(){
+try{
+var canvas=document.createElement('canvas');
+var ratio=img.height/img.width;
+canvas.width=THUMBNAIL_MAX_WIDTH;
+canvas.height=Math.round(THUMBNAIL_MAX_WIDTH*ratio);
+var ctx=canvas.getContext('2d');
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
+resolve(canvas.toDataURL('image/jpeg',0.7));
+}catch(e){resolve(dataUri)}
+};
+img.onerror=function(){resolve(dataUri)};
+img.src=dataUri;
+});
+}
+
+function processOneFile(file){
+if(!file.type.startsWith('image/'))return Promise.resolve(null);
+if(file.size>MAX_IMAGE_SIZE)return Promise.resolve(null);
+return fileToDataUri(file).then(function(dataUri){
+return generateThumbnail(dataUri).then(function(thumb){
+return{file:file,dataUri:dataUri,thumbnail:thumb,id:Date.now()+Math.random()};
+});
+}).catch(function(){return null});
+}
+
+function handleFiles(files){
+var imageFiles=Array.from(files).filter(function(f){return f.type.startsWith('image/')});
+if(!imageFiles.length)return;
+state.isLoadingImages=true;
+updateGenerateBtn();
+setStatus('Chargement…');
+var promises=imageFiles.map(function(f){return processOneFile(f)});
+Promise.all(promises).then(function(results){
+results.forEach(function(r){if(r)state.images.push(r)});
+renderImages();
+state.isLoadingImages=false;
+setStatus(null);
+updateGenerateBtn();
+});
+}
+
+function removeImage(id){
+state.images=state.images.filter(function(img){return img.id!==id});
+renderImages();
+updateGenerateBtn();
+}
+
+function renderImages(){
+var grid=document.getElementById('images-grid');
+var html='';
+state.images.forEach(function(img){
+html+='<div class="image-card"><img src="'+(img.thumbnail||img.dataUri)+'"><button class="remove-btn" data-remove="'+img.id+'">✕</button></div>';
+});
+grid.innerHTML=html;
+var btns=grid.querySelectorAll('[data-remove]');
+btns.forEach(function(btn){
+btn.addEventListener('click',function(e){
+e.stopPropagation();
+removeImage(parseFloat(btn.dataset.remove));
+});
+});
+}
+
+function renderStyles(){
+var container=document.getElementById('styles-grid');
+var html='';
+STYLES.forEach(function(cat){
+html+='<div class="style-category-header">'+esc(cat.cat)+'</div>';
+html+='<div class="style-category-desc">'+esc(cat.desc)+'</div>';
+cat.items.forEach(function(s){
+html+='<div class="style-card '+(state.selectedStyle===s.id?'selected':'')+'" data-style="'+s.id+'"><div class="style-emoji">'+s.emoji+'</div><div><div class="style-name">'+esc(s.name)+'</div><div class="style-desc">'+esc(s.desc)+'</div></div></div>';
+});
+});
+container.innerHTML=html;
+var cards=container.querySelectorAll('[data-style]');
+cards.forEach(function(el){
+el.addEventListener('click',function(){
+state.selectedStyle=el.dataset.style;
+renderStyles();
+});
+});
+}
+
+function findStyle(id){
+var found=null;
+STYLES.forEach(function(cat){
+cat.items.forEach(function(s){if(s.id===id)found=s});
+});
+return found;
+}
+
+function buildPrompt(){
+var style=state.selectedStyle?findStyle(state.selectedStyle):null;
+var parts=[];
+parts.push('Animate this exact photo of a person as the starting frame. The person must remain IDENTICAL to the input image: same face, same expression base, same clothing, same identity. This is a CONTINUATION of the source photo, bringing it gently to life. Preserve the exact composition and framing.');
+if(style)parts.push(style.prompt);
+if(state.mainPrompt&&state.mainPrompt.trim())parts.push('Additional direction: '+state.mainPrompt.trim());
+parts.push('Subtle, respectful, natural movement. No exaggerated changes. Portrait orientation 9:16 vertical, 24fps, no text, no watermarks.');
+return parts.join('. ');
+}
+  
+function apiFetch(url,options){
+var attempt=0;
+function tryFetch(){
+if(state.stopRequested)return Promise.reject(new Error('Arrêt demandé'));
+return fetch(url,options).then(function(res){
+if(res.status===429){return sleep(30000).then(tryFetch)}
+if(res.status===503){return sleep(10000).then(tryFetch)}
+return res;
+}).catch(function(e){
+if(e.message==='Arrêt demandé')throw e;
+attempt++;
+if(attempt>=7)throw e;
+return sleep(5000).then(tryFetch);
+});
+}
+return tryFetch();
+}
+
+function createVideoTask(imageDataUri,prompt){
+var body={model:MODEL_VIDEO,prompt:prompt,image:imageDataUri,num_frames:state.durationFrames,frame_rate:FRAME_RATE};
+return apiFetch(API_BASE+'/videos',{
+method:'POST',
+headers:{'Authorization':'Bearer '+getApiKey(),'Content-Type':'application/json'},
+body:JSON.stringify(body)
+}).then(function(res){
+if(!res.ok)return res.text().then(function(err){throw new Error('HTTP '+res.status+' — '+err.slice(0,200))});
+return res.json().then(function(data){
+var videoId=data.video_id||data.id||data.task_id;
+if(!videoId)throw new Error('Pas de video_id');
+return videoId;
+});
+});
+}
+
+function pollVideo(videoId,onProgress){
+var estimatedSec=45;
+var remaining=Math.max(20,Math.floor(estimatedSec*0.8));
+function countdown(){
+if(remaining<=0)return pollAttempts(0);
+if(state.stopRequested)return Promise.reject(new Error('Arrêt demandé'));
+onProgress('Votre vidéo se prépare… — '+remaining+'s');
+remaining--;
+return sleep(1000).then(countdown);
+}
+function pollAttempts(attempt){
+if(attempt>=MAX_POLL_ATTEMPTS)return Promise.reject(new Error('Délai dépassé'));
+if(state.stopRequested)return Promise.reject(new Error('Arrêt demandé'));
+var url=POLL_BASE+'?video_id='+encodeURIComponent(videoId)+'&model_name='+encodeURIComponent(MODEL_VIDEO);
+return apiFetch(url,{method:'GET',headers:{'Authorization':'Bearer '+getApiKey()}}).then(function(res){
+return res.json().then(function(d){
+var status=d.status||'unknown';
+var progress=d.progress||0;
+onProgress('Création en cours… — '+progress+'%');
+if(status==='completed'||status==='succeeded'||status==='done'){
+var videoUrl=(d.metadata&&d.metadata.url)||d.url||(d.output&&d.output.url);
+if(!videoUrl)throw new Error('Terminé sans URL');
+return videoUrl;
+}
+if(status==='failed'||status==='error'||status==='cancelled')throw new Error('Échec ('+status+')');
+return sleep(POLL_INTERVAL_SEC*1000).then(function(){return pollAttempts(attempt+1)});
+});
+});
+}
+return countdown();
+}
+
+function renderQueue(){
+var queueEl=document.getElementById('queue');
+if(!state.queue.length){queueEl.style.display='none';return}
+queueEl.style.display='block';
+var total=state.queue.length;
+var done=state.completed+state.failed;
+var html='<div class="queue-summary"><span>Progression : '+done+'/'+total+'</span></div>';
+state.queue.slice(0,MAX_VISIBLE_QUEUE).forEach(function(item){
+var icon='○',statusText='En attente',cls='pending';
+if(item.status==='creating'){icon='◐';statusText='Préparation…';cls='creating'}
+else if(item.status==='processing'){icon='◐';statusText=item.progress||'En cours…';cls='processing'}
+else if(item.status==='done'){icon='●';statusText='Terminé';cls='done'}
+else if(item.status==='failed'){icon='✕';statusText='Échec';cls='failed'}
+html+='<div class="queue-item '+cls+'"><div class="q-icon">'+icon+'</div><div class="q-name">Photo '+(item.imageIndex+1)+'</div><div class="q-status">'+esc(statusText)+'</div></div>';
+});
+queueEl.innerHTML=html;
+}
+
+function addToGallery(videoUrl,label){
+var galleryEl=document.getElementById('gallery');
+var galleryGrid=document.getElementById('gallery-grid');
+galleryEl.style.display='block';
+var el=document.createElement('div');
+el.className='gallery-item';
+var videoHtml='<video controls preload="metadata" muted playsinline><source src="'+videoUrl+'" type="video/mp4"></video>';
+videoHtml+='<div class="g-caption">'+esc(label)+'</div>';
+videoHtml+='<a class="g-download" href="'+videoUrl+'" download="photo-vivante-'+Date.now()+'.mp4" target="_blank">💾 Télécharger la vidéo</a>';
+el.innerHTML=videoHtml;
+galleryGrid.appendChild(el);
+}
+
+function createTaskOnly(item){
+item.status='creating';
+item.progress='Préparation…';
+renderQueue();
+var prompt=buildPrompt();
+item.prompt=prompt;
+log('[Photo '+(item.imageIndex+1)+'] Création…');
+return createVideoTask(item.image.dataUri,prompt).then(function(videoId){
+item.videoId=videoId;
+item.startTime=Date.now();
+item.status='processing';
+item.progress='En cours…';
+renderQueue();
+log('[Photo '+(item.imageIndex+1)+'] Tâche créée');
+return videoId;
+});
+}
+
+function pollTaskAndDisplay(item){
+return pollVideo(item.videoId,function(prog){
+item.progress=prog;
+renderQueue();
+}).then(function(videoUrl){
+var elapsed=Date.now()-item.startTime;
+log('[Photo '+(item.imageIndex+1)+'] Terminée en '+(elapsed/1000).toFixed(1)+'s');
+item.status='done';
+item.videoUrl=videoUrl;
+item.progress='Terminé';
+state.completed++;
+renderQueue();
+updateGenerateBtn();
+addToGallery(videoUrl,'Photo '+(item.imageIndex+1));
+}).catch(function(e){
+if(e.message==='Arrêt demandé'){
+item.status='failed';
+item.progress='Arrêté';
+}else{
+log('[Photo '+(item.imageIndex+1)+'] '+e.message);
+item.status='failed';
+item.progress='Échec';
+state.failed++;
+}
+renderQueue();
+updateGenerateBtn();
+});
+}
+
+function startGeneration(){
+if(state.isRunning||!state.images.length)return;
+if(!getApiKey()){showToast('Ajoutez d abord votre clé API','error');return}
+state.mainPrompt=document.getElementById('main-prompt').value.trim();
+state.isRunning=true;
+state.stopRequested=false;
+state.completed=0;
+state.failed=0;
+createIntervalMs=CREATE_INTERVAL_MIN;
+state.queue=state.images.map(function(img,i){return{imageIndex:i,image:img,status:'pending',progress:null,videoId:null,videoUrl:null,prompt:null,startTime:null}});
+document.getElementById('gallery-grid').innerHTML='';
+document.getElementById('gallery').style.display='none';
+document.getElementById('stop-btn').classList.add('visible');
+document.getElementById('generate-btn').disabled=true;
+renderQueue();
+updateGenerateBtn();
+var totalStart=Date.now();
+var pollingTasks=[];
+function countdown(r,nextNum){
+if(r<=0||state.stopRequested)return Promise.resolve();
+setStatus('Respiration créative… — Photo '+nextNum+'/'+state.queue.length+' dans '+r+'s');
+return sleep(1000).then(function(){return countdown(r-1,nextNum)});
+}
+function finish(){
+var totalElapsed=(Date.now()-totalStart)/1000;
+var summary=state.stopRequested?'Arrêté — '+state.completed+'/'+state.queue.length+' vidéos':'✦ '+state.completed+'/'+state.queue.length+' vidéos créées ✦';
+log(summary);
+setStatus(summary);
+return sleep(4000).then(function(){
+setStatus(null);
+state.isRunning=false;
+state.stopRequested=false;
+document.getElementById('stop-btn').classList.remove('visible');
+updateGenerateBtn();
+showToast(state.completed+' vidéo'+(state.completed>1?'s':'')+' créée'+(state.completed>1?'s':''),'success');
+});
+}
+function processNext(i){
+if(state.stopRequested||i>=state.queue.length){
+if(pollingTasks.length>0)return Promise.allSettled(pollingTasks).then(finish);
+return finish();
+}
+var item=state.queue[i];
+return createTaskOnly(item).then(function(){
+pollingTasks.push(pollTaskAndDisplay(item));
+}).catch(function(e){
+if(e.message!=='Arrêt demandé'){
+log('[Photo '+(i+1)+'] Échec création : '+e.message);
+item.status='failed';
+item.progress='Échec';
+state.failed++;
+renderQueue();
+updateGenerateBtn();
+}
+}).then(function(){
+if(i<state.queue.length-1&&!state.stopRequested){
+var waitSec=Math.ceil(createIntervalMs/1000);
+return countdown(waitSec,i+2);
+}
+}).then(function(){return processNext(i+1)});
+}
+processNext(0).catch(function(e){log('Erreur globale : '+e.message);finish()});
+}
+
+function stopGeneration(){
+if(!state.isRunning)return;
+state.stopRequested=true;
+log('Arrêt demandé');
+setStatus('Arrêt en cours…');
+}
+
+function toggleWakeLock(){
+var el=document.getElementById('wake-status-text');
+var btn=document.getElementById('wake-toggle-btn');
+if(!el||!btn)return;
+if(el.textContent.indexOf('allumé')>-1){
+el.textContent='💤 Veille automatique';
+btn.textContent='Garder l écran allumé';
+try{localStorage.setItem(WAKE_LOCK_PREF,'0')}catch(e){}
+if(window._wakeVideo){try{window._wakeVideo.pause()}catch(e){}}
+showToast('Veille réactivée','warn');
+}else{
+el.textContent='✅ L écran reste allumé';
+btn.textContent='Désactiver';
+try{localStorage.setItem(WAKE_LOCK_PREF,'1')}catch(e){}
+tryWakeLock();
+showToast('L écran va rester allumé','success');
+}
+}
+
+function tryWakeLock(){
+if('wakeLock' in navigator&&navigator.wakeLock.request){
+navigator.wakeLock.request('screen').then(function(sentinel){
+window._wakeSentinel=sentinel;
+}).catch(function(){});
+}
+try{
+var canvas=document.getElementById('noSleepCanvas');
+var video=document.getElementById('noSleepVideo');
+if(canvas&&video&&canvas.captureStream){
+var ctx=canvas.getContext('2d');
+ctx.fillStyle='#000';ctx.fillRect(0,0,2,2);
+var stream=canvas.captureStream(1);
+video.srcObject=stream;
+video.muted=true;
+video.play().catch(function(){});
+window._wakeVideo=video;
+window._wakeStream=stream;
+}
+}catch(e){}
+}
+
+(function init(){
+var saveBtn=document.getElementById('api-save-btn');
+if(saveBtn)saveBtn.addEventListener('click',saveApiKey);
+var stopBtn=document.getElementById('stop-btn');
+if(stopBtn)stopBtn.addEventListener('click',stopGeneration);
+var apiInput=document.getElementById('api-key-input');
+if(apiInput)apiInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveApiKey()}});
+document.querySelectorAll('[data-toggle]').forEach(function(header){
+header.addEventListener('click',function(){
+document.getElementById(header.dataset.toggle).classList.toggle('open');
+});
+});
+var uploadZone=document.getElementById('upload-zone');
+var fileInput=document.getElementById('file-input');
+if(uploadZone&&fileInput){
+uploadZone.addEventListener('click',function(){fileInput.click()});
+fileInput.addEventListener('change',function(e){handleFiles(e.target.files);fileInput.value=''});
+}
+var mainPrompt=document.getElementById('main-prompt');
+if(mainPrompt)mainPrompt.addEventListener('input',function(e){state.mainPrompt=e.target.value});
+var durationSelect=document.getElementById('duration-select');
+if(durationSelect)durationSelect.addEventListener('change',function(e){state.durationFrames=parseInt(e.target.value,10)});
+var framingSelect=document.getElementById('framing-select');
+if(framingSelect)framingSelect.addEventListener('change',function(e){state.framing=e.target.value});
+var intensitySelect=document.getElementById('intensity-select');
+if(intensitySelect)intensitySelect.addEventListener('change',function(e){state.intensity=e.target.value});
+var generateBtn=document.getElementById('generate-btn');
+if(generateBtn)generateBtn.addEventListener('click',startGeneration);
+var wakeBtn=document.getElementById('wake-toggle-btn');
+if(wakeBtn)wakeBtn.addEventListener('click',toggleWakeLock);
+try{
+var saved=localStorage.getItem(WAKE_LOCK_PREF);
+if(saved==='1'){
+var wt=document.getElementById('wake-status-text');
+var wb=document.getElementById('wake-toggle-btn');
+if(wt)wt.textContent='✅ L écran reste allumé';
+if(wb)wb.textContent='Désactiver';
+tryWakeLock();
+}
+}catch(e){}
+updateApiPanel();
+renderStyles();
+renderImages();
+renderQueue();
+log('Prêt.');
+})();
+</script>
+</body>
+</html>
