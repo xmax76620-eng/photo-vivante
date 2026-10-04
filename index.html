@@ -429,12 +429,14 @@ return found;
 function buildPrompt(){
 var style=state.selectedStyle?findStyle(state.selectedStyle):null;
 var parts=[];
-parts.push('CRITICAL INSTRUCTION: Animate this exact photo without changing the person identity. The face, facial features, eyes, nose, mouth, skin tone, hair, and clothing must remain 100% IDENTICAL to the source image. This is NOT a re-imagination, NOT a stylization, NOT a new generation. This is the SAME photo gently brought to life with subtle motion only.');
-parts.push('DO NOT alter the facial structure. DO NOT change the person age. DO NOT modify the expression beyond subtle natural movement. DO NOT add or remove any object. DO NOT change the background composition.');
-if(style)parts.push('Motion style: '+style.prompt);
-if(state.mainPrompt&&state.mainPrompt.trim())parts.push('Additional direction (must not override the identity preservation rule): '+state.mainPrompt.trim());
-parts.push('Only the following subtle movements are allowed: slow natural breathing, gentle eye blinking, soft micro-expressions, slight hair movement if applicable, very subtle light shifts. The camera must remain static.');
-parts.push('Preserve the exact original framing, composition, and aspect ratio. Portrait orientation 9:16 vertical, 24fps, no text, no watermarks, no subtitles, no added effects.');
+parts.push('STRICT IDENTITY PRESERVATION RULE: The face, facial features, eyes, nose, mouth, ears, skin tone, hair color, hair style, eyebrows, and all facial details must remain EXACTLY IDENTICAL to the source image. Pixel-for-pixel. Do not regenerate, restyle, redraw, or reinterpret the face in any way.');
+parts.push('This is a SUBTLE ANIMATION of the ORIGINAL photo, not a new generation. The output must look like the exact same person from the exact same photo, just very slightly moving.');
+parts.push('DO NOT change the age. DO NOT change the expression beyond micro-movements. DO NOT change the hairstyle. DO NOT change the clothing. DO NOT change the background. DO NOT add or remove any object.');
+parts.push('ALLOWED MOVEMENTS ONLY: slow natural breathing (chest and shoulders), gentle eye blinking, very subtle micro-expressions (tiny smile, slight eyebrow lift), soft hair movement if there is wind. Nothing else.');
+parts.push('CAMERA: static, no zoom, no pan, no rotation. Same framing, same composition, same crop as the original.');
+if(style)parts.push('Atmosphere: '+style.prompt);
+if(state.mainPrompt&&state.mainPrompt.trim())parts.push('Additional direction (must NOT override identity preservation): '+state.mainPrompt.trim());
+parts.push('If the face cannot be preserved with 100% fidelity, output the original image unchanged with no animation. Portrait orientation 9:16 vertical, 24fps, no text, no watermarks, no added effects.');
 return parts.join(' ');
 }
   
